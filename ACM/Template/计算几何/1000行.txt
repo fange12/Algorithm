@@ -1,0 +1,1312 @@
+#include <bits/stdc++.h>
+using namespace std;
+typedef long long LL;
+#define mp make_pair
+#define pb push_back
+namespace Geometry{
+    #define typec double
+    const typec eps=1e-8;
+    const typec pi=acos(-1.0);
+    const typec inf=1e20;
+    const int maxp=100001;
+    int dblcmp(double d){
+        if (fabs(d)<eps)return 0;
+        return d>eps?1:-1;
+    }
+    int sgn(double a) {return a<-eps?-1:a>eps;}
+    inline double sqr(double x){return x*x;}
+    struct Point2D{
+        typec x,y;
+        Point2D(){}
+        Point2D(typec _x,typec _y):x(_x),y(_y){};
+        void input(){
+            scanf("%lf%lf",&x,&y);
+        }
+        void output(){
+            printf("%.2f %.2f\n",x,y);
+        }
+        bool operator==(Point2D a)const{
+            return dblcmp(a.x-x)==0&&dblcmp(a.y-y)==0;
+        }
+        bool operator<(Point2D a)const{
+            return dblcmp(a.x-x)==0?dblcmp(y-a.y)<0:x<a.x;
+        }
+        typec len(){
+            return hypot(x,y);
+        }
+        typec len2(){
+            return x*x+y*y;
+        }
+        Point2D operator + (const Point2D &A) const{
+            return Point2D(x + A.x , y + A.y);
+        }
+        Point2D operator - (const Point2D &A) const{
+            return Point2D(x - A.x , y - A.y);
+        }
+        Point2D operator * (const typec _x) const{
+            return Point2D(x * _x , y * _x);
+        }
+        typec operator * (const Point2D &A) const{
+            return x * A.x + y * A.y;
+        }
+        typec operator ^ (const Point2D &A) const{
+            return x * A.y - y * A.x;
+        }
+        Point2D operator / (const typec _p) const{
+            return Point2D(x / _p , y / _p);
+        }
+        typec distance(Point2D p){
+            return hypot(x-p.x,y-p.y);
+        }
+        Point2D add(Point2D p){
+            return Point2D(x+p.x,y+p.y);
+        }
+        Point2D sub(Point2D p){
+            return Point2D(x-p.x,y-p.y);
+        }
+        Point2D mul(typec b){
+            return Point2D(x*b,y*b);
+        }
+        Point2D div(typec b){
+            return Point2D(x/b,y/b);
+        }
+        typec dot(Point2D p){
+            return x*p.x+y*p.y;
+        }
+        typec det(Point2D p){
+            return x*p.y-y*p.x;
+        }
+        typec rad(Point2D a,Point2D b){
+            Point2D p=*this;
+            return fabs(atan2(fabs(a.sub(p).det(b.sub(p))),a.sub(p).dot(b.sub(p))));
+        }
+        Point2D trunc(typec r){
+            typec l=len();
+            if (!dblcmp(l))return *this;
+            r/=l;
+            return Point2D(x*r,y*r);
+        }
+        Point2D rotleft(){
+            return Point2D(-y,x);
+        }
+        Point2D rotright(){
+            return Point2D(y,-x);
+        }
+        Point2D rotate(Point2D p,typec angle)//绕点p逆时针旋转angle角度
+        {
+            Point2D v=this->sub(p);
+            typec c=cos(angle),s=sin(angle);
+            return Point2D(p.x+v.x*c-v.y*s,p.y+v.x*s+v.y*c);
+        }
+    };
+
+    typec cross(Point2D a,Point2D b,Point2D c){
+        return (b.sub(a)).det(c.sub(a));
+    }
+
+    struct Line2D{
+        Point2D a,b;
+        double at;
+        Line2D(){}
+        Line2D(Point2D _a,Point2D _b){
+            a=_a;
+            b=_b;
+        }
+        bool operator==(Line2D v){
+            return (a==v.a)&&(b==v.b);
+        }
+        bool operator < (const Line2D &t) const {
+            return sgn(at-t.at)<0||
+                    (sgn(at-t.at)==0&&sgn(cross(a,b,t.a))<0);
+        }
+
+        Point2D operator &(Line2D &A)const
+        {
+            Point2D res = a;
+            //注意：有些题目可能会有直线相交或者重合情况
+            //可以把返回值改成`pair<Point,int>`来返回两直线的状态。
+            double t = ((a - A.a) ^ (A.a - A.b)) / ((a - b) ^ (A.a - A.b));
+            res.x += (b.x - a.x) * t;
+            res.y += (b.y - a.y) * t;
+            return res;
+        }
+        //倾斜角angle
+        Line2D(Point2D p,double angle)
+        {
+            a=p;
+            if (dblcmp(angle-pi/2)==0)
+            {
+                b=a.add(Point2D(0,1));
+            }
+            else
+            {
+                b=a.add(Point2D(1,tan(angle)));
+            }
+        }
+
+        //矢量V以P为顶点逆时针旋转angle并放大scale倍
+        Point2D rotate(Point2D v,Point2D p,double angle,double scale){
+            Point2D ret=p;
+            v.x-=p.x,v.y-=p.y;
+            p.x=scale*cos(angle);
+            p.y=scale*sin(angle);
+            ret.x+=v.x*p.x-v.y*p.y;
+            ret.y+=v.x*p.y+v.y*p.x;
+            return ret;
+        }
+
+        //ax+by+c=0
+        Line2D(typec _a,typec _b,typec _c){
+            if (dblcmp(_a)==0)
+            {
+                a=Point2D(0,-_c/_b);
+                b=Point2D(1,-_c/_b);
+            }
+            else if (dblcmp(_b)==0)
+            {
+                a=Point2D(-_c/_a,0);
+                b=Point2D(-_c/_a,1);
+            }
+            else
+            {
+                a=Point2D(0,-_c/_b);
+                b=Point2D(1,(-_c-_a)/_b);
+            }
+        }
+        void input()
+        {
+            a.input();
+            b.input();
+            angle();
+        }
+        void adjust()
+        {
+            if (b<a)swap(a,b);
+        }
+        double length()
+        {
+            return a.distance(b);
+        }
+        double angle()//直线倾斜角 0<=angle<180
+        {
+            double k=atan2(b.y-a.y,b.x-a.x);
+            if (dblcmp(k)<0)k+=pi;
+            if (dblcmp(k-pi)==0)k-=pi;
+            at = k;
+            return k;
+        }
+        //点和线段关系
+        //1 在逆时针
+        //2 在顺时针
+        //3 平行
+        int relation(Point2D p)
+        {
+            int c=dblcmp(p.sub(a).det(b.sub(a)));
+            if (c<0)return 1;
+            if (c>0)return 2;
+            return 3;
+        }
+        bool pointonseg(Point2D p)
+        {
+            return dblcmp(p.sub(a).det(b.sub(a)))==0&&dblcmp(p.sub(a).dot(p.sub(b)))<=0;
+        }
+        bool parallel(Line2D v)
+        {
+            return dblcmp(b.sub(a).det(v.b.sub(v.a)))==0;
+        }
+        //2 规范相交
+        //1 非规范相交
+        //0 不相交
+        int segcrossseg(Line2D v)
+        {
+            int d1=dblcmp(b.sub(a).det(v.a.sub(a)));
+            int d2=dblcmp(b.sub(a).det(v.b.sub(a)));
+            int d3=dblcmp(v.b.sub(v.a).det(a.sub(v.a)));
+            int d4=dblcmp(v.b.sub(v.a).det(b.sub(v.a)));
+            if ((d1^d2)==-2&&(d3^d4)==-2)return 2;
+            return (d1==0&&dblcmp(v.a.sub(a).dot(v.a.sub(b)))<=0||
+                    d2==0&&dblcmp(v.b.sub(a).dot(v.b.sub(b)))<=0||
+                    d3==0&&dblcmp(a.sub(v.a).dot(a.sub(v.b)))<=0||
+                    d4==0&&dblcmp(b.sub(v.a).dot(b.sub(v.b)))<=0);
+        }
+    // v是线段，this是直线
+        int linecrossseg(Line2D v)
+        {
+            int d1=dblcmp(b.sub(a).det(v.a.sub(a)));
+            int d2=dblcmp(b.sub(a).det(v.b.sub(a)));
+            if ((d1^d2)==-2)return 2;
+            return (d1==0||d2==0);
+        }
+        //0 平行
+        //1 重合
+        //2 相交
+        int linecrossline(Line2D v)
+        {
+            if ((*this).parallel(v))
+            {
+                return v.relation(a)==3;
+            }
+            return 2;
+        }
+        Point2D crosspoint(Line2D v)
+        {
+            double a1=v.b.sub(v.a).det(a.sub(v.a));
+            double a2=v.b.sub(v.a).det(b.sub(v.a));
+            return Point2D((a.x*a2-b.x*a1)/(a2-a1),(a.y*a2-b.y*a1)/(a2-a1));
+        }
+        double dispointtoline(Point2D p)
+        {
+            return fabs(p.sub(a).det(b.sub(a)))/length();
+        }
+        double dispointtoseg(Point2D p)
+        {
+            if (dblcmp(p.sub(b).dot(a.sub(b)))<0||dblcmp(p.sub(a).dot(b.sub(a)))<0)
+            {
+                return min(p.distance(a),p.distance(b));
+            }
+            return dispointtoline(p);
+        }
+        Point2D lineprog(Point2D p)
+        {
+            return a.add(b.sub(a).mul(b.sub(a).dot(p.sub(a))/b.sub(a).len2()));
+        }
+        Point2D symmetrypoint(Point2D p)    //对称点
+        {
+            Point2D q=lineprog(p);
+            return Point2D(2*q.x-p.x,2*q.y-p.y);
+        }
+    };
+    struct Circle{
+        Point2D p;
+        typec r;
+        Circle(){}
+        Circle(Point2D _p,typec _r):
+        p(_p),r(_r){};
+        Circle(typec x,typec y,typec _r):p(Point2D(x,y)),r(_r){};
+        Circle(Point2D a,Point2D b,Point2D c){//三角形的外接圆
+            p=Line2D(a.add(b).div(2),a.add(b).div(2).add(b.sub(a).rotleft())).crosspoint(Line2D(c.add(b).div(2),c.add(b).div(2).add(b.sub(c).rotleft())));
+            r=p.distance(a);
+        }
+        Circle(Point2D a,Point2D b,Point2D c,bool t)//三角形的内切圆
+        {
+            Line2D u,v;
+            double m=atan2(b.y-a.y,b.x-a.x),n=atan2(c.y-a.y,c.x-a.x);
+            u.a=a;
+            u.b=u.a.add(Point2D(cos((n+m)/2),sin((n+m)/2)));
+            v.a=b;
+            m=atan2(a.y-b.y,a.x-b.x),n=atan2(c.y-b.y,c.x-b.x);
+            v.b=v.a.add(Point2D(cos((n+m)/2),sin((n+m)/2)));
+            p=u.crosspoint(v);
+            r=Line2D(a,b).dispointtoseg(p);
+        }
+        void input()
+        {
+            p.input();
+            scanf("%lf",&r);
+        }
+        void output()
+        {
+            printf("%.2lf %.2lf %.2lf\n",p.x,p.y,r);
+        }
+        bool operator==(Circle v)
+        {
+            return ((p==v.p)&&dblcmp(r-v.r)==0);
+        }
+        bool operator<(Circle v)const
+        {
+            return ((p<v.p)||(p==v.p)&&dblcmp(r-v.r)<0);
+        }
+        double area()
+        {
+            return pi*sqr(r);
+        }
+        double circumference()
+        {
+            return 2*pi*r;
+        }
+        //0 圆外
+        //1 圆上
+        //2 圆内
+        int relation(Point2D b)
+        {
+            double dst=b.distance(p);
+            if (dblcmp(dst-r)<0)return 2;
+            if (dblcmp(dst-r)==0)return 1;
+            return 0;
+        }
+        int relationseg(Line2D v)
+        {
+            double dst=v.dispointtoseg(p);
+            if (dblcmp(dst-r)<0)return 2;
+            if (dblcmp(dst-r)==0)return 1;
+            return 0;
+        }
+        int relationline(Line2D v)
+        {
+            double dst=v.dispointtoline(p);
+            if (dblcmp(dst-r)<0)return 2;
+            if (dblcmp(dst-r)==0)return 1;
+            return 0;
+        }
+        //过a b两点 半径r的两个圆
+        int getCircle(Point2D a,Point2D b,double r,Circle&c1,Circle&c2)
+        {
+            Circle x(a,r),y(b,r);
+            int t=x.pointcrossCircle(y,c1.p,c2.p);
+            if (!t)return 0;
+            c1.r=c2.r=r;
+            return t;
+        }
+        //与直线u相切 过点q 半径r1的圆
+        int getCircle(Line2D u,Point2D q,double r1,Circle &c1,Circle &c2)
+        {
+            double dis=u.dispointtoline(q);
+            if (dblcmp(dis-r1*2)>0)return 0;
+            if (dblcmp(dis)==0)
+            {
+                c1.p=q.add(u.b.sub(u.a).rotleft().trunc(r1));
+                c2.p=q.add(u.b.sub(u.a).rotright().trunc(r1));
+                c1.r=c2.r=r1;
+                return 2;
+            }
+            Line2D u1=Line2D(u.a.add(u.b.sub(u.a).rotleft().trunc(r1)),u.b.add(u.b.sub(u.a).rotleft().trunc(r1)));
+            Line2D u2=Line2D(u.a.add(u.b.sub(u.a).rotright().trunc(r1)),u.b.add(u.b.sub(u.a).rotright().trunc(r1)));
+            Circle cc=Circle(q,r1);
+            Point2D p1,p2;
+            if (!cc.pointcrossline(u1,p1,p2))cc.pointcrossline(u2,p1,p2);
+            c1=Circle(p1,r1);
+            if (p1==p2)
+            {
+                c2=c1;return 1;
+            }
+            c2=Circle(p2,r1);
+            return 2;
+        }
+        //同时与直线u,v相切 半径r1的圆
+        int getCircle(Line2D u,Line2D v,typec r1,Circle &c1,Circle &c2,Circle &c3,Circle &c4)
+        {
+            if (u.parallel(v))return 0;
+            Line2D u1=Line2D(u.a.add(u.b.sub(u.a).rotleft().trunc(r1)),u.b.add(u.b.sub(u.a).rotleft().trunc(r1)));
+            Line2D u2=Line2D(u.a.add(u.b.sub(u.a).rotright().trunc(r1)),u.b.add(u.b.sub(u.a).rotright().trunc(r1)));
+            Line2D v1=Line2D(v.a.add(v.b.sub(v.a).rotleft().trunc(r1)),v.b.add(v.b.sub(v.a).rotleft().trunc(r1)));
+            Line2D v2=Line2D(v.a.add(v.b.sub(v.a).rotright().trunc(r1)),v.b.add(v.b.sub(v.a).rotright().trunc(r1)));
+            c1.r=c2.r=c3.r=c4.r=r1;
+            c1.p=u1.crosspoint(v1);
+            c2.p=u1.crosspoint(v2);
+            c3.p=u2.crosspoint(v1);
+            c4.p=u2.crosspoint(v2);
+            return 4;
+        }
+        //同时与不相交圆cx,cy相切 半径为r1的圆
+        int getCircle(Circle cx,Circle cy,double r1,Circle&c1,Circle&c2)
+        {
+            Circle x(cx.p,r1+cx.r),y(cy.p,r1+cy.r);
+            int t=x.pointcrossCircle(y,c1.p,c2.p);
+            if (!t)return 0;
+            c1.r=c2.r=r1;
+            return t;
+        }
+        int pointcrossline(Line2D v,Point2D &p1,Point2D &p2)//求与线段交要先判断relationseg
+        {
+            if (!(*this).relationline(v))return 0;
+            Point2D a=v.lineprog(p);
+            double d=v.dispointtoline(p);
+            d=sqrt(r*r-d*d);
+            if (dblcmp(d)==0)
+            {
+                p1=a;
+                p2=a;
+                return 1;
+            }
+            p1=a.sub(v.b.sub(v.a).trunc(d));
+            p2=a.add(v.b.sub(v.a).trunc(d));
+            return 2;
+        }
+        //5 相离
+        //4 外切
+        //3 相交
+        //2 内切
+        //1 内含
+        int relationCircle(Circle v)
+        {
+            double d=p.distance(v.p);
+            if (dblcmp(d-r-v.r)>0)return 5;
+            if (dblcmp(d-r-v.r)==0)return 4;
+            double l=fabs(r-v.r);
+            if (dblcmp(d-r-v.r)<0&&dblcmp(d-l)>0)return 3;
+            if (dblcmp(d-l)==0)return 2;
+            if (dblcmp(d-l)<0)return 1;
+        }
+        int pointcrossCircle(Circle v,Point2D &p1,Point2D &p2)
+        {
+            int rel=relationCircle(v);
+            if (rel==1||rel==5)return 0;
+            double d=p.distance(v.p);
+            double l=(d+(sqr(r)-sqr(v.r))/d)/2;
+            double h=sqrt(sqr(r)-sqr(l));
+            p1=p.add(v.p.sub(p).trunc(l).add(v.p.sub(p).rotleft().trunc(h)));
+            p2=p.add(v.p.sub(p).trunc(l).add(v.p.sub(p).rotright().trunc(h)));
+            if (rel==2||rel==4)
+            {
+                return 1;
+            }
+            return 2;
+        }
+        //过一点做圆的切线 (先判断点和圆关系)
+        int tangentline(Point2D q,Line2D &u,Line2D &v){
+            int x=relation(q);
+            if (x==2)return 0;
+            if (x==1)
+            {
+                u=Line2D(q,q.add(q.sub(p).rotleft()));
+                v=u;
+                return 1;
+            }
+            double d=p.distance(q);
+            double l=sqr(r)/d;
+            double h=sqrt(sqr(r)-sqr(l));
+            u=Line2D(q,p.add(q.sub(p).trunc(l).add(q.sub(p).rotleft().trunc(h))));
+            v=Line2D(q,p.add(q.sub(p).trunc(l).add(q.sub(p).rotright().trunc(h))));
+            return 2;
+        }
+        double areaCircle(Circle v){
+            int rel=relationCircle(v);
+            if (rel>=4)return 0.0;
+            if (rel<=2)return min(area(),v.area());
+            double d=p.distance(v.p);
+            double hf=(r+v.r+d)/2.0;
+            double ss=2*sqrt(hf*(hf-r)*(hf-v.r)*(hf-d));
+            double a1=acos((r*r+d*d-v.r*v.r)/(2.0*r*d));
+            a1=a1*r*r;
+            double a2=acos((v.r*v.r+d*d-r*r)/(2.0*v.r*d));
+            a2=a2*v.r*v.r;
+            return a1+a2-ss;
+        }
+        double areatriangle(Point2D a,Point2D b){
+            if (dblcmp(p.sub(a).det(p.sub(b))==0))return 0.0;
+            Point2D q[5];
+            int len=0;
+            q[len++]=a;
+            Line2D l(a,b);
+            Point2D p1,p2;
+            if (pointcrossline(l,q[1],q[2])==2){
+                if (dblcmp(a.sub(q[1]).dot(b.sub(q[1])))<0)q[len++]=q[1];
+                if (dblcmp(a.sub(q[2]).dot(b.sub(q[2])))<0)q[len++]=q[2];
+            }
+            q[len++]=b;
+            if (len==4&&(dblcmp(q[0].sub(q[1]).dot(q[2].sub(q[1])))>0))swap(q[1],q[2]);
+            double res=0;
+            int i;
+            for (i=0;i<len-1;i++){
+                if (relation(q[i])==0||relation(q[i+1])==0){
+                    double arg=p.rad(q[i],q[i+1]);
+                    res+=r*r*arg/2.0;
+                }
+                else{
+                    res+=fabs(q[i].sub(p).det(q[i+1].sub(p))/2.0);
+                }
+            }
+            return res;
+        }
+    };
+    struct Polygon2D{
+        int n;
+        Point2D p[maxp];
+        Line2D l[maxp];
+        Polygon2D () {}
+        Polygon2D (int _n) {
+            n = _n;
+        }
+        void copy(Polygon2D & A){
+            A.n=n;
+            for (int i=0;i<n;++i){
+                A.p[i]=p[i];
+                A.l[i]=l[i];
+            }
+        }
+        void input()
+        {
+            for (int i=0;i<n;i++)
+            {
+                p[i].input();
+            }
+        }
+        void add(Point2D q)
+        {
+            p[n++]=q;
+        }
+        void getline()
+        {
+            for (int i=0;i<n;i++)
+            {
+                l[i]=Line2D(p[i],p[(i+1)%n]);
+            }
+        }
+        struct cmp
+        {
+            Point2D p;
+            cmp(const Point2D &p0){p=p0;}
+            bool operator()(const Point2D &aa,const Point2D &bb)
+            {
+                Point2D a=aa,b=bb;
+                int d=dblcmp(a.sub(p).det(b.sub(p)));
+                if (d==0)
+                {
+                    return dblcmp(a.distance(p)-b.distance(p))<0;
+                }
+                return d>0;
+            }
+        };
+        void norm()
+        {
+            Point2D mi=p[0];
+            for (int i=1;i<n;i++)mi=min(mi,p[i]);
+            sort(p,p+n,cmp(mi));
+        }
+        void getconvex(Polygon2D &convex)
+        {
+            int i,j,k;
+            sort(p,p+n);
+            convex.n=n;
+            for (i=0;i<min(n,2);i++)
+            {
+                convex.p[i]=p[i];
+            }
+            if (n<=2)return;
+            int &top=convex.n;
+            top=1;
+            for (i=2;i<n;i++)
+            {
+                while (top&&dblcmp(convex.p[top].sub(p[i]).det(convex.p[top-1].sub(p[i])))<=0)
+                    top--;
+                convex.p[++top]=p[i];
+            }
+            int temp=top;
+            convex.p[++top]=p[n-2];
+            for (i=n-3;i>=0;i--)
+            {
+                while (top!=temp&& dblcmp(convex.p[top].sub(p[i]).det(convex.p[top-1].sub(p[i])))<=0)
+                    top--;
+                convex.p[++top]=p[i];
+            }
+        }
+        bool isconvex()
+        {
+            bool s[3];
+            memset(s,0,sizeof(s));
+            int i,j,k;
+            for (i=0;i<n;i++)
+            {
+                j=(i+1)%n;
+                k=(j+1)%n;
+                s[dblcmp(p[j].sub(p[i]).det(p[k].sub(p[i])))+1]=1;
+                if (s[0]&&s[2])return 0;
+            }
+            return 1;
+        }
+        //3 点上
+        //2 边上
+        //1 内部
+        //0 外部
+        int relationpoint(Point2D q)
+        {
+            int i,j;
+            for (i=0;i<n;i++)
+            {
+                if (p[i]==q)return 3;
+            }
+            getline();
+            for (i=0;i<n;i++)
+            {
+                if (l[i].pointonseg(q))return 2;
+            }
+            int cnt=0;
+            for (i=0;i<n;i++)
+            {
+                j=(i+1)%n;
+                int k=dblcmp(q.sub(p[j]).det(p[i].sub(p[j])));
+                int u=dblcmp(p[i].y-q.y);
+                int v=dblcmp(p[j].y-q.y);
+                if (k>0&&u<0&&v>=0)cnt++;
+                if (k<0&&v<0&&u>=0)cnt--;
+            }
+            return cnt!=0;
+        }
+        //1 在多边形内长度为正
+        //2 相交或与边平行
+        //0 无任何交点
+        int relationline(Line2D u)
+        {
+            int i,j,k=0;
+            getline();
+            for (i=0;i<n;i++)
+            {
+                if (l[i].segcrossseg(u)==2)return 1;
+                if (l[i].segcrossseg(u)==1)k=1;
+            }
+            if (!k)return 0;
+            vector<Point2D>vp;
+            for (i=0;i<n;i++)
+            {
+                if (l[i].segcrossseg(u))
+                {
+                    if (l[i].parallel(u))
+                    {
+                        vp.pb(u.a);
+                        vp.pb(u.b);
+                        vp.pb(l[i].a);
+                        vp.pb(l[i].b);
+                        continue;
+                    }
+                    vp.pb(l[i].crosspoint(u));
+                }
+            }
+            sort(vp.begin(),vp.end());
+            int sz=vp.size();
+            for (i=0;i<sz-1;i++)
+            {
+                Point2D mid=vp[i].add(vp[i+1]).div(2);
+                if (relationpoint(mid)==1)return 1;
+            }
+            return 2;
+        }
+        //直线u切割凸多边形左侧
+        //注意直线方向
+        void convexcut(Line2D u,Polygon2D &po)
+        {
+            int i,j,k;
+            int &top=po.n;
+            top=0;
+            for (i=0;i<n;i++)
+            {
+                int d1=dblcmp(p[i].sub(u.a).det(u.b.sub(u.a)));
+                int d2=dblcmp(p[(i+1)%n].sub(u.a).det(u.b.sub(u.a)));
+                if (d1>=0)po.p[top++]=p[i];
+                if (d1*d2<0)po.p[top++]=u.crosspoint(Line2D(p[i],p[(i+1)%n]));
+            }
+        }
+
+
+        double getcircumference()
+        {
+            double sum=0;
+            int i;
+            for (i=0;i<n;i++)
+            {
+                sum+=p[i].distance(p[(i+1)%n]);
+            }
+            return sum;
+        }
+        double getarea()
+        {
+            double sum=0;
+            int i;
+            for (i=0;i<n;i++)
+            {
+                sum+=p[i].det(p[(i+1)%n]);
+            }
+            return fabs(sum)/2;
+        }
+        bool getdir()//1代表逆时针 0代表顺时针
+        {
+            double sum=0;
+            int i;
+            for (i=0;i<n;i++)
+            {
+                sum+=p[i].det(p[(i+1)%n]);
+            }
+            if (dblcmp(sum)>0)return 1;
+            return 0;
+        }
+        Point2D getbarycentre()
+        {
+            Point2D ret(0,0);
+            double area=0;
+            int i;
+            for (i=1;i<n-1;i++)
+            {
+                double tmp=p[i].sub(p[0]).det(p[i+1].sub(p[0]));
+                if (dblcmp(tmp)==0)continue;
+                area+=tmp;
+                ret.x+=(p[0].x+p[i].x+p[i+1].x)/3*tmp;
+                ret.y+=(p[0].y+p[i].y+p[i+1].y)/3*tmp;
+            }
+            if (dblcmp(area))ret=ret.div(area);
+            return ret;
+        }
+        double areaintersection(Polygon2D po)
+        {
+        }
+        double areaunion(Polygon2D po)
+        {
+            return getarea()+po.getarea()-areaintersection(po);
+        }
+        void cg()
+        {
+            if (getdir())reverse(p,p+n);
+        }
+        int pointinpolygon(Point2D q)//点在凸多边形内部的判定
+        {
+            if (dblcmp(q.sub(p[0]).det(p[n-1].sub(p[0])))==0)
+            {
+                //if (line(p[n-1],p[0]).pointonseg(q))return n-1;
+                return -1;
+            }
+            if (dblcmp(q.sub(p[0]).det(p[1].sub(p[0])))==0)
+            {
+                //if (line(p[n-1],p[0]).pointonseg(q))return n-1;
+                return -1;
+            }
+            int low=1,high=n-2,mid;
+            static Polygon2D c;
+            while (low<=high)
+            {
+                mid=(low+high)>>1;
+                if (dblcmp(q.sub(p[0]).det(p[mid].sub(p[0])))>=0&&dblcmp(q.sub(p[0]).det(p[mid+1].sub(p[0])))<0)
+                {
+                    c.p[0]=p[mid];
+                    c.p[1]=p[mid+1];
+                    c.p[2]=p[0];
+                    c.n=3;
+                    if (Line2D(p[mid],p[mid+1]).pointonseg(q))return -1;
+                    if (c.relationpoint(q))return mid;
+                    return -1;
+                }
+                if (dblcmp(q.sub(p[0]).det(p[mid].sub(p[0])))>0)
+                {
+                    low=mid+1;
+                }
+                else
+                {
+                    high=mid-1;
+                }
+            }
+            return -1;
+        }
+        /**
+        \subsection{半平面交}
+            直线左边代表有效区域。
+            \begin{lstlisting}[language=c++
+            */
+        /*
+        bool HPIcmp(Line2D A, Line2D B)
+        {
+            if (fabs(A.at - B.at) > eps)    return A.at < B.at;
+            return ((A.a - B.a) * (B.b-B.a)) < 0;
+        }
+        */
+        void HPI(Line2D line[], int m)
+        {
+            int tot = m;
+            Line2D Q[10000];
+            sort(line, line + m );//, HPIcmp); // HPIcmp
+            tot = 1;
+            for (int i = 1; i < m; i++)
+                if (fabs(line[i].at - line[i - 1].at) > eps)
+                    line[tot++] = line[i];
+            int head = 0, tail = 1;
+            Q[0] = line[0];
+            Q[1] = line[1];
+            n = 0;
+            for (int i = 2; i < tot; i++)
+            {
+                if (fabs((Q[tail].b-Q[tail].a) ^ (Q[tail - 1].b-Q[tail - 1].a)) < eps ||
+                        fabs((Q[head].b-Q[head].a) ^ (Q[head + 1].b-Q[head + 1].a)) < eps){
+                    return;
+                }
+                while (head < tail && (((Q[tail]&Q[tail - 1]) - line[i].a) ^ (line[i].b-line[i].a)) > eps)
+                    tail--;
+                while (head < tail && (((Q[head]&Q[head + 1]) - line[i].a) ^ (line[i].b-line[i].a)) > eps)
+                    head++;
+                Q[++tail] = line[i];
+            }
+            while (head < tail && (((Q[tail]&Q[tail - 1]) - Q[head].a) ^ (Q[head].b-Q[head].a)) > eps)
+                tail--;
+            while (head < tail && (((Q[head]&Q[head + 1]) - Q[tail].a) ^ (Q[tail].b-Q[tail].a)) > eps)
+                head++;
+            if (tail <= head + 1) return;
+            for (int i = head; i < tail; i++)
+                p[n++] = Q[i] & Q[i + 1];
+            if (head < tail + 1)
+                p[n++] = Q[head] & Q[tail];
+        }
+        /*
+        \subsection{直线与凸包求交点}
+            复杂度$O(\log{n})$。\\
+            需要先预处理几个东西。\\
+            \begin{lstlisting}[language=c++]
+        */
+        //`二分[la,lb]这段区间那条边与Line2D相交`
+        int Gao(int la,int lb,Line2D line)
+        {
+            if (la > lb)
+                lb += n;
+            int l = la,r = lb,mid;
+            while (l < r)
+            {
+                mid = l+r+1>>1;
+                if (dblcmp((line.b-line.a)^(p[la]-line.a))*dblcmp((line.b-line.a)^(p[mid]-line.a)) >= 0)
+                    l = mid;
+                else
+                    r = mid-1;
+            }
+            return l%n;
+        }
+        //`求l与凸包的交点`
+
+        //`先调用Gettheta预处理出凸包每条边的斜率，然后处理成升序排列`
+        double theta[maxp];
+
+        void Gettheta()
+        {
+            for (int i = 0;i < n;i++)
+            {
+                Point2D v = p[(i+1)%n]-p[i];
+                theta[i] = atan2(v.y,v.x);
+            }
+            for (int i = 1;i < n;i++)
+                if (theta[i-1] > theta[i]+eps)
+                    theta[i] += 2*pi;
+        }
+
+        double lineInterConvexHull(Line2D l , Point2D & pa , Point2D & pb)
+        {
+            double tnow;
+            Point2D v = l.b-l.a;
+            tnow = atan2(v.y,v.x);
+            if (dblcmp(tnow-theta[0]) < 0)    tnow += 2*pi;
+            int pl = lower_bound(theta,theta+n,tnow)-theta;
+            tnow = atan2(-v.y,-v.x);
+            if (dblcmp(tnow-theta[0]) < 0)    tnow += 2*pi;
+            int pr = lower_bound(theta,theta+n,tnow)-theta;
+            //`pl和pr是在l方向上距离最远的点对`
+            pl = pl%n;
+            pr = pr%n;
+
+            if (dblcmp(v^(p[pl]-l.a))*dblcmp(v^(p[pr]-l.a)) >= 0)
+                return 0.0;
+
+            int xa = Gao(pl,pr,l);
+            int xb = Gao(pr,pl,l);
+
+            if (xa > xb)    swap(xa,xb);
+            //`与[xa,xa+1]和[xb,xb+1]`这两条线段相交
+
+            if (dblcmp(v^(p[xa+1]-p[xa])) == 0)  return 0.0;
+            if (dblcmp(v^(p[xb+1]-p[xb])) == 0)  return 0.0;
+
+            pa = Line2D(p[xa],p[xa+1])&l;
+            pb = Line2D(p[xb],p[xb+1])&l;
+            //return MP(pa , pb);
+            //`题目：求直线切凸包得到的两部分的面积`
+            //double area0 = sum[xb]-sum[xa+1]+(pa*p[xa+1])/2.0+(p[xb]*pb)/2.0+(pb*pa)/2.0;
+            //double area1 = sum[xa+n]-sum[xb+1]+(pb*p[xb+1])/2.0+(p[xa]*pa)/2.0+(pa*pb)/2.0;
+
+            //return min(area0,area1);
+        }
+    };
+    struct Point3D {
+        typec x,y,z;
+        Point3D(typec _x=0,typec _y=0,typec _z=0):x(_x),y(_y),z(_z){}
+        Point3D operator - (const Point3D &p) const {
+            return Point3D(x-p.x,y-p.y,z-p.z);
+        }
+        Point3D operator + (const Point3D &p) const {
+            return Point3D(x+p.x,y+p.y,z+p.z);
+        }
+        Point3D operator * (const Point3D &p) const {
+            return Point3D(y*p.z-z*p.y,z*p.x-x*p.z,x*p.y-y*p.x);
+        }
+        Point3D operator * (const typec &k) const {
+            return Point3D(x*k,y*k,z*k);
+        }
+        typec operator ^ (const Point3D &p) const {
+            return x*p.x+y*p.y+z*p.z;
+        }
+        typec len2(){return x*x+y*y+z*z; }
+        typec len() {return sqrt(len2()); }
+        Point3D normalize() {
+            double l=len();
+            return Point3D(x/l,y/l,z/l);
+        }
+        void input() {scanf("%lf%lf%lf",&x,&y,&z);}
+    };
+
+    struct Plane3D {
+        typec A,B,C,D;
+        bool setPlane(Point3D p1,Point3D p2,Point3D p3) {
+            Point3D norm=(p1-p2)*(p2-p3);
+            if (norm.len()<eps) return false;
+            A=norm.x;B=norm.y;C=norm.z;
+            D=-(norm^p1);
+            return true;
+        }
+    };
+
+    struct Line3D {
+        Point3D s,d;
+        void SetLine(Point3D a,Point3D b) {
+            s=a;d=b-a;
+        }
+    };
+
+    struct Polygon3D{
+        const static int MAXV = 505;
+        struct fac
+        {
+            int a, b, c;
+            bool ok;
+        };
+        int n;
+        Point3D P[MAXV];
+        int cnt;
+        fac F[MAXV*8];
+        int to[MAXV][MAXV];
+        double vlen(Point3D a)
+        {
+            return sqrt(a.x*a.x+a.y*a.y+a.z*a.z);
+        }
+        double area(Point3D a,Point3D b, Point3D c)
+        {
+            return vlen((b-a)*(c-a));
+        }
+        double volume(Point3D a, Point3D b, Point3D c, Point3D d)
+        {
+            return (b-a)*(c-a)^(d-a);
+        }
+        double ptof(Point3D &p, fac &f)
+        {
+            Point3D m = P[f.b]-P[f.a], n = P[f.c]-P[f.a], t = p-P[f.a];
+            return (m * n) ^ t;
+        }
+        void deal(int p, int a, int b)
+        {
+            int f = to[a][b];
+            fac add;
+            if (F[f].ok)
+            {
+                if (ptof(P[p], F[f]) > eps)
+                    dfs(p, f);
+                else
+                {
+                    add.a = b, add.b = a, add.c = p, add.ok = 1;
+                    to[p][b] = to[a][p] = to[b][a] = cnt;
+                    F[cnt++] = add;
+                }
+            }
+        }
+        void dfs(int p, int cur)
+        {
+            F[cur].ok = 0;
+            deal(p, F[cur].b, F[cur].a);
+            deal(p, F[cur].c, F[cur].b);
+            deal(p, F[cur].a, F[cur].c);
+        }
+        bool same(int s, int t)
+        {
+            Point3D &a = P[F[s].a], &b = P[F[s].b], &c = P[F[s].c];
+            return fabs(volume(a, b, c, P[F[t].a])) < eps && fabs(volume(a, b, c,
+                    P[F[t].b])) < eps && fabs(volume(a, b, c, P[F[t].c])) < eps;
+        }
+        void construct()
+        {
+            cnt = 0;
+            if (n < 4)
+                return;
+            bool sb = 1;
+            for (int i = 1; i < n; i++)
+            {
+                if (vlen(P[0] - P[i]) > eps)
+                {
+                    swap(P[1], P[i]);
+                    sb = 0;
+                    break;
+                }
+            }
+            if (sb)return;
+            sb = 1;
+            for (int i = 2; i < n; i++)
+            {
+                if (vlen((P[0] - P[1]) * (P[1] - P[i])) > eps)
+                {
+                    swap(P[2], P[i]);
+                    sb = 0;
+                    break;
+                }
+            }
+            if (sb)return;
+            sb = 1;
+            for (int i = 3; i < n; i++)
+            {
+                if (fabs((P[0] - P[1]) * (P[1] - P[2]) ^ (P[0] - P[i])) > eps)
+                {
+                    swap(P[3], P[i]);
+                    sb = 0;
+                    break;
+                }
+            }
+            if (sb)return;
+            fac add;
+            for (int i = 0; i < 4; i++)
+            {
+                add.a = (i+1)%4, add.b = (i+2)%4, add.c = (i+3)%4, add.ok = 1;
+                if (ptof(P[i], add) > 0)
+                    swap(add.b, add.c);
+                to[add.a][add.b] = to[add.b][add.c] = to[add.c][add.a] = cnt;
+                F[cnt++] = add;
+            }
+            for (int i = 4; i < n; i++)
+            {
+                for (int j = 0; j < cnt; j++)
+                {
+                    if (F[j].ok && ptof(P[i], F[j]) > eps)
+                    {
+                        dfs(i, j);
+                        break;
+                    }
+                }
+            }
+            int tmp = cnt;
+            cnt = 0;
+            for (int i = 0; i < tmp; i++)
+            {
+                if (F[i].ok)
+                {
+                    F[cnt++] = F[i];
+                }
+            }
+        }
+    //表面积
+        double area()
+        {
+            double ret = 0.0;
+            for (int i = 0; i < cnt; i++)
+            {
+                ret += area(P[F[i].a], P[F[i].b], P[F[i].c]);
+            }
+            return ret / 2.0;
+        }
+    //体积
+        double volume()
+        {
+            Point3D O(0, 0, 0);
+            double ret = 0.0;
+            for (int i = 0; i < cnt; i++)
+            {
+                ret += volume(O, P[F[i].a], P[F[i].b], P[F[i].c]);
+            }
+            return fabs(ret / 6.0);
+        }
+    //表面三角形数
+        int facetCnt_tri()
+        {
+            return cnt;
+        }
+    //表面多边形数
+        int facetCnt()
+        {
+            int ans = 0;
+            for (int i = 0; i < cnt; i++)
+            {
+                bool nb = 1;
+                for (int j = 0; j < i; j++)
+                {
+                    if (same(i, j))
+                    {
+                        nb = 0;
+                        break;
+                    }
+                }
+                ans += nb;
+            }
+            return ans;
+        }
+
+        Point3D Fc[MAXV*8];
+        double V[MAXV*8];
+        Point3D Center()//重心
+        {
+            Point3D O(0,0,0);
+            for (int i = 0; i < cnt; i++)
+            {
+                Fc[i].x = (O.x+P[F[i].a].x+P[F[i].b].x+P[F[i].c].x)/4.0;
+                Fc[i].y = (O.y+P[F[i].a].y+P[F[i].b].y+P[F[i].c].y)/4.0;
+                Fc[i].z = (O.z+P[F[i].a].z+P[F[i].b].z+P[F[i].c].z)/4.0;
+                V[i] = volume(O,P[F[i].a],P[F[i].b],P[F[i].c]);
+            }
+            Point3D res = Fc[0],tmp;
+            double m = V[0];
+            for (int i = 1; i < cnt; i++)
+            {
+                if (fabs(m+V[i]) < eps)
+                    V[i] += eps;
+                tmp.x = (m*res.x+V[i]*Fc[i].x)/(m+V[i]);
+                tmp.y = (m*res.y+V[i]*Fc[i].y)/(m+V[i]);
+                tmp.z = (m*res.z+V[i]*Fc[i].z)/(m+V[i]);
+                m += V[i];
+                res = tmp;
+            }
+            return res;
+        }
+    };
+    bool LineCrossPlane(Plane3D pla,Line3D l,Point3D &p) {
+        Point3D norm=Point3D(pla.A,pla.B,pla.C);
+        Point3D d=l.d.normalize();
+        typec rt=(norm^d);
+        if (sgn(rt)==0) return false;
+        double t=(-pla.D-(norm^l.s))/rt;
+        p=l.s+(d*t);
+        return true;
+    }
+
+    struct Square{ //正方形给对角线顶点求另两顶点
+        Point2D A,B,C,D;
+        Square(){}
+        Square(Point2D a, Point2D b,Point2D c,Point2D d):A(a),B(b),C(c),D(d){}
+        Square(Point2D a,Point2D c){
+            A=a,C=c;
+            DoneSq(A,C,B,D);
+        }
+        void DoneSq(Point2D a, Point2D c,Point2D & b,Point2D &d){
+             typec x,y,mx, my;
+             mx = (a.x+c.x)/2.0, my = (a.y+c.y)/2.0;
+             x = a.x - mx;    y = a.y - my;
+             b.x = -y + mx;   b.y = x + my;
+             x = c.x - mx;    y = c.y - my;
+             d.x = - y + mx; d.y = x + my;
+        }
+    };
+    struct Tetra{ //三棱锥体积计算
+        typec a,b,c,d,e,f;
+        Tetra(){}
+        Tetra(typec _a,typec _b,typec _c,typec _d,typec _e,typec _f):a(_a),b(_b),c(_c),d(_d),e(_e),f(_f){}
+        void input(){
+            scanf("%lf%lf%lf%lf%lf%lf",&a,&b,&c,&d,&e,&f);
+        }
+        typec getVolume(){
+            double tr1,tr2,tr3,tr4,temp,ans;
+            tr1=acos( (c*c+b*b-f*f) / (2.0*b*c) );
+            tr2=acos( (a*a+c*c-e*e) / (2.0*a*c) );
+            tr3=acos( (a*a+b*b-d*d) / (2.0*a*b) );
+            tr4=(tr1+tr2+tr3)/2.0;
+            temp=sqrt( sin(tr4) * sin(tr4-tr1) * sin(tr4-tr2) * sin(tr4-tr3));
+            ans=a*b*c*temp/3.0;
+            return ans;
+        }
+    };
+
+    struct Triangle{
+        Point2D a,b,c;
+        Triangle(){}
+        Triangle(Point2D _a,Point2D _b,Point2D _c):a(_a),b(_b),c(_c){}
+        //外心
+        Point2D circumcenter(){
+            Line2D u,v;
+            u.a.x=(a.x+b.x)/2;
+            u.a.y=(a.y+b.y)/2;
+            u.b.x=u.a.x-a.y+b.y;
+            u.b.y=u.a.y+a.x-b.x;
+            v.a.x=(a.x+c.x)/2;
+            v.a.y=(a.y+c.y)/2;
+            v.b.x=v.a.x-a.y+c.y;
+            v.b.y=v.a.y+a.x-c.x;
+            return u.crosspoint(v);
+        }
+
+        //内心
+        Point2D incenter(){
+            Line2D u,v;
+            double m,n;
+            u.a=a;
+            m=atan2(b.y-a.y,b.x-a.x);
+            n=atan2(c.y-a.y,c.x-a.x);
+            u.b.x=u.a.x+cos((m+n)/2);
+            u.b.y=u.a.y+sin((m+n)/2);
+            v.a=b;
+            m=atan2(a.y-b.y,a.x-b.x);
+            n=atan2(c.y-b.y,c.x-b.x);
+            v.b.x=v.a.x+cos((m+n)/2);
+            v.b.y=v.a.y+sin((m+n)/2);
+            return u.crosspoint(v);
+        }
+
+        //垂心
+        Point2D perpencenter(){
+            Line2D u,v;
+            u.a=c;
+            u.b.x=u.a.x-a.y+b.y;
+            u.b.y=u.a.y+a.x-b.x;
+            v.a=b;
+            v.b.x=v.a.x-a.y+c.y;
+            v.b.y=v.a.y+a.x-c.x;
+            return u.crosspoint(v);
+        }
+
+        //重心
+        //到三角形三顶点距离的平方和最小的点
+        //三角形内到三边距离之积最大的点
+        Point2D barycenter(){
+            Line2D u,v;
+            u.a.x=(a.x+b.x)/2;
+            u.a.y=(a.y+b.y)/2;
+            u.b=c;
+            v.a.x=(a.x+c.x)/2;
+            v.a.y=(a.y+c.y)/2;
+            v.b=b;
+            return u.crosspoint(v);
+        }
+
+        //费马点
+        //到三角形三顶点距离之和最小的点
+        Point2D fermentpoint(){
+            Point2D u,v;
+            double step=fabs(a.x)+fabs(a.y)+fabs(b.x)+fabs(b.y)+fabs(c.x)+fabs(c.y);
+            int i,j,k;
+            u.x=(a.x+b.x+c.x)/3;
+            u.y=(a.y+b.y+c.y)/3;
+            while (step>1e-10)
+                for (k=0;k<10;step/=2,k++)
+                    for (i=-1;i<=1;i++)
+                        for (j=-1;j<=1;j++){
+                            v.x=u.x+step*i;
+                            v.y=u.y+step*j;
+                            if (u.distance(a)+u.distance(b)+u.distance(c)>v.distance(a)+v.distance(b)+v.distance(c))
+                                u=v;
+                        }
+            return u;
+        }
+    };
+
+    struct Ball{
+        //计算圆心角lat表示纬度,-90<=w<=90,lng表示经度
+        //返回两点所在大圆劣弧对应圆心角,0<=angle<=pi
+        double angle(double lng1,double lat1,double lng2,double lat2){
+            double dlng=fabs(lng1-lng2)*pi/180;
+            while (dlng>=pi+pi)
+                dlng-=pi+pi;
+            if (dlng>pi)
+                dlng=pi+pi-dlng;
+            lat1*=pi/180,lat2*=pi/180;
+            return acos(cos(lat1)*cos(lat2)*cos(dlng)+sin(lat1)*sin(lat2));
+        }
+
+        //计算距离,r为球半径
+        double line_dist(double r,double lng1,double lat1,double lng2,double lat2){
+            double dlng=fabs(lng1-lng2)*pi/180;
+            while (dlng>=pi+pi)
+                dlng-=pi+pi;
+            if (dlng>pi)
+                dlng=pi+pi-dlng;
+            lat1*=pi/180,lat2*=pi/180;
+            return r*sqrt(2-2*(cos(lat1)*cos(lat2)*cos(dlng)+sin(lat1)*sin(lat2)));
+        }
+
+        //计算球面距离,r为球半径
+        inline double sphere_dist(double r,double lng1,double lat1,double lng2,double lat2){
+            return r*angle(lng1,lat1,lng2,lat2);
+        }
+    };
+}using namespace Geometry ;
+
+    return 0;
+}

@@ -1,0 +1,50 @@
+typedef long long LL;
+LL gcd(LL a,LL b)
+{
+    return b==0?a:gcd(b,a%b);
+}//求最大公约数
+
+
+void Ex_gcd(LL a,LL b,LL& d,LL& x,LL& y)//d=gcd(a,b)
+{
+    if(!b){d=a;x=1;y=0;}
+    else {Ex_gcd(b,a%b,d,y,x);y-=x*(a/b);}
+}//求|x|+|y|最小值//一个
+
+void exgcd(LL a,LL b,LL &d,LL &x,LL &y)
+{
+    if(!b)
+    {
+        x=1;y=0;d=a;
+        return ;
+    }
+    else
+    {
+        exgcd(b,a%b,d,x,y);
+        LL temp=x;
+        x=y;
+        y=temp-(a/b)*y;
+    }
+}//线性方程组
+
+int gcd(LL m,LL &w,LL n,LL &u)
+{
+    int x0=1,y0=0,x1=0,y1=1;w=0;u=0;
+    LL r=(m%n+n)%n;
+    LL q=(m-r)/n;
+    while(r)
+    {
+        w=x0-q*x1;u=y0-q*y1;x0=x1;y0=y1;x1=w;y1=u;
+        m=n;n=r;r=m%n;q=(m-r)/n;
+    }
+    return n;
+}//求w最小值，即x最小值
+
+
+LL inv(LL a,LL n)
+{
+    LL d,x,y;
+    gcd(a,n,d,x,y);
+    return d==1?(x+n)%n:-1;
+}//求a  mod n的逆或者用欧拉函数
+//x可能为负数，所以加上n一定为正数

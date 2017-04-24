@@ -1,0 +1,408 @@
+/*
+费马小定理:
+        a^(x - 1) ≡ 1 (mod x), 当x为素数且(x, a) = 1
+
+        证明:
+                当x为素数时,有φ(x) = x - 1
+                由欧拉定理可知
+                        a^φ(x)≡1(mod x)
+                      a^(x - 1)≡1(mod x)
+
+二次探测定理:
+        当p为素数时， 对于x^2 ≡1(mod p)， 在[0, p - 1]上有解1 或 p - 1
+
+        证明:
+                x^2 ≡1(mod p)
+                x^2 - 1 ≡0(mod p)
+                (x + 1)(x -1) ≡ 0(mod p)
+                所以x + 1或 x - 1 能被p整除
+
+                因为p为素数, 在[-1, p]上只能整除0 与 p
+                当x + 1 (∈[1, p])能被p整除, x + 1 = p     => x = p - 1
+                当x - 1 (∈[-1, p - 2])能被p整除, x - 1 = 0     => x = 1
+
+Miller - Rabin 素性测试：
+       首先要做的是测试n是否是某些数中的一个，然后下面的过程就不用做了，有1, 2, 及其他偶数。因为其判断简单，而且下面的过程不能用于这些数。
+
+       对于在这些数以外的数，则要继续测试，先假设要测试的数n是素数。
+       对于测试数n，将n - 1 分解成 o * 2^k，其中o表示一个奇数。(显然都有k >= 1)
+
+       于是n能通过以a为底的费马素性测试。((a, n) = 1, 可以多选几个a, 提高准确率, 一般选前几个素数, 或其它随机数):
+                a^(n - 1) ≡ 1 (mod n)
+                a^(o * 2^k) ≡ 1 (mod n)       (若还有下一次，k减一之后从这面开始)
+                (a^(o * 2^(k - 1)))^2 ≡ 1 (mod n)
+                (a^(o * 2^(k - 1)) mod n)^2 ≡ 1 (mod n)
+
+                由二次探测定理可知 a^(o * 2^(k - 1)) mod n 为 1 或 n - 1
+
+        (核心)于是计算: a^(o * 2^(k - 1)) mod n
+                1.若既不为1，也不为n - 1，则表明出现矛盾(与二次控测定理)，推翻n为素数的结论。
+                3.若为1，但无法再提取指数中的因子2,，判定也停止(因为无法再用二次探测定理)。
+                4.若为n - 1，判定停止(因为无法再用二次探测定理)。
+                2.若为1，但还可提取指数中的因子2，则提出此因子，再次用二次推测定理判定。
+
+
+
+        最后若不能推翻n为素数, 则n很有可能为素数.那些通过以a为底的Miller - Rabin测试的数,称为以a为底的强伪素数.
+
+*/
+#include<iostream>
+#include<cstdio>
+#include<algorithm>
+#include<cstring>
+using namespace std;
+typedef long long ll;
+ll mulmod(ll a,ll n,ll m){
+    ll res = 0;
+    a %= m;
+    while(n){
+        if(n & 1) res = (a + res) % m;
+        n >>= 1;
+        a = (a + a) % m;
+    }
+    return res;
+}
+ll powmod(ll a,ll b,ll m){
+    ll res = 1;
+    while(b){
+        if(b & 1) res = mulmod(res , a , m);
+        b >>= 1;
+        a = mulmod(a , a , m);
+    }
+    return res;
+}
+
+bool MR(ll n,ll a){
+
+    if(n == 2) return true;
+    ll d = n - 1,t;
+    if(d & 1) return false;
+    while(!(d&1)) d >>= 1;
+    t = powmod(a,d,n);
+    while(d != n-1 && t != 1 && t != n-1){
+        d <<= 1;
+        t = mulmod(t,t,n);
+    }
+    return (t == n-1)||(d&1);//这一次是1了，说明它上一次的t不等于n-1或1 不符合，所以t==1并不符合
+}
+bool isp(int n){
+    if(n == 1) return false;
+    if(n == 2 || n == 7 || n == 61) return true;
+    return MR(n,2) && MR(n,7) && MR(n,61);
+}//int
+bool isp(ll n){
+   if(n == 1 || n == 46856248255981LL) return false;
+   if(n==2 || n== 3 || n==7 || n==61 || n==24251) return true;
+   return MR(n,2)&& MR(n,3) && MR(n,7) && MR(n,61) && MR(n,24251)  ;
+}//合数较多测试2,3,7,61,5,11,13,17,19,23素数较多测试2,3,5,7,11,13,17,19,23。
+
+/*long long mult_mod(long long a,long long b,long long c)
+{
+    a%=c;
+    b%=c;
+    long long ret=0;
+    while(b)
+    {
+        if(b&1){ret+=a;ret%=c;}
+        a<<=1;
+        if(a>=c)a%=c;
+        b>>=1;
+    }
+    return ret;
+}
+
+//************************************************
+//pollard_rho 算法进行质因数分解
+//************************************************
+long long factor[100],ans;//质因数分解结果（刚返回时是无序的）
+int tol;//质因数的个数。数组小标从0开始
+
+long long gcd(long long a,long long b)
+{
+    if(a==0)return 1;//???????
+    if(a<0) return gcd(-a,b);
+    while(b)
+    {
+        long long t=a%b;
+        a=b;
+        b=t;
+    }
+    return a;
+}
+
+long long Pollard_rho(long long x,long long c)
+{
+    long long i=1,k=2;
+    long long x0=rand()%x;
+    long long y=x0;
+    while(1)
+    {
+        i++;
+        x0=(mult_mod(x0,x0,x)+c)%x;
+        long long d=gcd(y-x0,x);
+        if(d!=1&&d!=x) return d;
+        if(y==x0) return x;
+        if(i==k){y=x0;k+=k;}
+    }
+}
+//对n进行素因子分解
+void findfac(long long n){
+    if(isp(n))//素数
+    {
+        ans = min(ans,n);
+        return;
+    }
+    long long p=n;
+    while(p>=n)p=Pollard_rho(p,rand()%(n-1)+1);
+    findfac(p);
+    findfac(n/p);
+}*/ll PB(ll n,int c=12323,int x0=2){
+	if(!(n&1)) return 2;
+	ll x,y,d=1,k=0,i=1;
+	x=y=x0;
+	while(1){
+		x=(mulmod(x,x,n)+c)%n;//f(x)=x*x+c，c可换24251或其他素数
+		d=__gcd(n+x-y,n);
+		if(d!=1 && d<n) return d;//如莫名其妙一直TLE可尝试d<n改成d<=n，目前没碰到过
+		if(y==x) return n;
+		if(++k == i) y=x,i<<=1;
+	}
+}
+
+
+//分解质因数部分
+ll s[110],ans;int l=0;
+void gn(ll n,int op=12323){
+	if(isp(n)) {ans = min(ans,n);return;}
+	ll x=PB(n);
+	while(x==n) x=PB(n,--op);
+	gn(x);
+	gn(n/x);
+}
+int main(){
+    int T;
+    cin>>T;
+    ll N;
+    while(T--){
+        cin>>N;
+        if(isp(N)) puts("Prime");
+        else{
+            ans = N;
+            gn(N);
+            cout<<ans<<endl;
+        }
+    }
+    return 0;
+}
+
+
+
+
+
+
+
+
+
+
+
+
+#include<stdio.h>
+#include<stdlib.h>
+#include<time.h>
+typedef __int64 int64 ;
+#define INF 99999999999999
+#define Rand_time 5					//随机次数与正确率有关
+#define C 16381
+int64 MIN;
+int64 Gcd(int64 a,int64 b)			//最大公约数，不解释
+{
+	return a%b?Gcd(b,a%b):b;
+}
+int64 Multi_mod(int64 a,int64 b,int64 n)	//(a*b)%n 直接计算有超出int64表示范围，故采取加法变形来计算值
+{											
+	int64 s = 0;
+	while(b){
+		if(b&1)s = (s+a)%n;
+		a = (a+a)%n;
+		b >>= 1;
+	}
+	return s;
+}
+int64 Pow_mod(int64 a,int64 b,int64 n)		//标准的快速求幂，不解释
+{
+	int64 s=1;
+	while(b){
+		if(b&1) s = Multi_mod(s,a,n);
+		a = Multi_mod(a,a,n);
+		b >>= 1;
+	}
+	return s;
+}
+
+int Prime_test(int64 n)
+{
+	int64 u = n-1,pre,x;
+	int i,j,k=0;
+	if( n == 2 || n == 3 || n==5 || n==7 || n==11)return 1;
+	if( n == 1 || (!(n%2)) ||(!(n%3)) || (!(n%5)) || (!(n%7)) || (!(n%11)))return 0;
+	for(;!(u&1);k++,u>>=1);
+	srand((int64)time(0));		//随机参数
+	for(i=0;i<Rand_time;i++){
+		x = rand()%(n-2) + 2;	//保证数据大于等于2
+		if(x%n==0)continue;
+		x = Pow_mod(x,u,n);		//计算x^u
+		pre = x;				//保留x,既x^2 mod n =1 的根
+		for(j=0;j<k;j++){		//如果n是素数那么x^2mod n = 1,仅有两个根（不同余），+1和-1（n-1）
+			x = Multi_mod(x,x,n);
+			if(x==1 && pre != 1 &&pre != (n-1))
+				return 0;
+			pre = x;
+		}
+		if( x != 1)return 0;	//费马小定理 a^(n-1) mod n 恒等于 1 则可以认为 n 是素数
+	}
+	return 1;
+}
+int64 rho(int64 n ,int c)
+{
+	int64 x,y,d;
+	int i = 1,j =2;
+	srand((int64)time(0));
+	x = rand()%(n-1)+1;
+	y = x;
+	while(1){
+		i ++;
+		x = (Multi_mod(x,x,n)+c)%n;
+		d = Gcd(y-x+n,n);
+		if(d!=1 && d!=n)return d;
+		if(x==y)return n;
+		if(i==j){
+			y = x;
+			j<<=1;
+		}
+	}
+}
+void find_factor(int64 n ,int c)
+{
+	int64 r,d;
+	if( n <=1)return ;
+	if(Prime_test(n)){
+		if(MIN > n) MIN = n;
+		return ;
+	}
+	r = rho(n,c--);			//不明白为什么 c-- ，求包养
+	d = n/r;
+	find_factor(d,c);
+	find_factor(r,c);
+}
+int main()
+{
+	int T;
+	int64 n;
+	scanf("%d",&T);
+	while(T--){
+		scanf("%I64d",&n);
+		if(Prime_test(n))puts("Prime");
+		else {
+			MIN  = INF;
+			find_factor(n,C);
+			printf("%I64d\n",MIN);
+		}
+	}
+	return 0;
+}
+
+
+
+
+
+
+
+#include <cstdio>
+#include <cstdlib>
+
+using namespace std;
+
+typedef long long LLi;
+
+namespace {
+	LLi Abs(LLi x) {return x<0?-x:x;}
+	LLi Min(LLi x, LLi y) {return x<y?x:y;}
+	LLi Add(LLi x, LLi y, LLi m) {return x+y>=m?x+y-m:x+y;}
+	LLi Mul(LLi x, LLi y, LLi m)
+	{
+		LLi res=0;
+		while (y) {if (y&1) res=Add(res,x,m); x=Add(x,x,m); y>>=1;}
+		return res;
+	}
+	LLi Pow(LLi x, LLi y, LLi m)
+	{
+		LLi res=1;
+		while (y) {if (y&1) res=Mul(res,x,m); x=Mul(x,x,m); y>>=1;}
+		return res;
+	}
+	LLi GCD(LLi x, LLi y)
+	{
+		while (y) {LLi r=x%y; x=y; y=r;}
+		return x;
+	}
+	bool isPrime(LLi n)
+	{
+		if (n==2) return true;
+		if (!(n&1)) return false;
+		static int Prime[9]={2,3,5,7,11,13,17,19,23};
+		LLi d, dd, x;
+		for (d=n-1; !(d&1); d>>=1) {}
+		for (int i=0; i<9&&Prime[i]<n; i++) {
+			x = Pow(Prime[i],d,n);
+			dd = d;
+			while (dd!=n-1 && x!=1 && x!=n-1) {
+				dd <<= 1;
+				x = Mul(x,x,n);
+			}
+			if ((x==1&&dd!=d) || (x!=1&&dd==n-1)) 
+				return false;
+		}
+		return true;
+	}
+	LLi Rand(LLi x, LLi y)
+	{
+		LLi res=(LLi)rand()<<31|rand();
+		return res%(y-x+1)+x;
+	}
+	LLi PollardRho(LLi n)
+	{
+		LLi x, y, d, c;
+		while (true) {
+			c = Rand(2,n-1);
+			if (!(c&1)||c==n-2) c++;
+			x = y = Rand(2,n-1);
+			do {
+				#define f(x) ((Mul(x,x,n)+c)%n)
+				x = f(x);
+				y=f(y); y=f(y);
+				d = GCD(Abs(x-y),n);
+				#undef f
+			} while (d==1);
+			if (d!=n) return d;
+		}
+	}
+	LLi MinFactor(LLi n)
+	{
+		if (!(n&1)) return 2;
+		if (isPrime(n)) return n;
+		LLi d=PollardRho(n);
+		return Min(MinFactor(d),MinFactor(n/d));
+	}
+};
+
+int main()
+{
+	srand(19960419);
+	int tests; scanf("%d", &tests);
+	while (tests--) {
+		LLi n; scanf("%lld", &n);
+		if (isPrime(n)) puts("Prime");
+		else printf("%lld\n", MinFactor(n));
+	}
+	return 0;
+}

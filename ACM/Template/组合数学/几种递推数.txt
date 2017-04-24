@@ -1,0 +1,5 @@
+Stirling:
+n个不同的元素，放在k个无标记的盒子中：S(n,0)=0;S(n,1)=1;S(n,n)=1;S(n,k)=0(k>n);S(n,k)=S(n-1,k-1)+kS(n-1,k)
+S(n,k)=C(z,w)(mod2)   z=n-ceil((k+1)/2),w=floor((k-1)/2)
+Catalan:h[n]=(4*n-2)/(n+1)*h[n-1];h[n]=C(2n,n)/(n+1);
+错位排列：Dn=（n-1）*（Dn-1+Dn-2）   D1=0，D2=1

@@ -1,0 +1,38 @@
+void merge_sort(int *A,int x,int y,int *T)
+{
+    if(y-x>1)
+    {
+        int m=x+(y-x)/2;
+        int p=x,q=m,i=x;
+        merge_sort(A,x,m,T);
+        merge_sort(A,m,y,T);
+        while(p<m||q<y)
+        {
+            if(q>=y||(p<m&&A[p]<=A[q]))T[i++]=A[p++];
+            else T[i++]=A[q++];
+        }
+        for(i=x;i<y;i++)A[i]=T[i];
+    }
+}
+
+
+void Merge(LL *A,LL x,LL y,LL *B)
+{
+    if(y-x<1)return ;
+    LL mid=(x+y)>>1;
+    Merge(A,x,mid,B);
+    Merge(A,mid+1,y,B);
+    LL k=x;
+    for(int i=x,j=mid+1;i<=mid||j<=y;)
+    {
+        if((A[i]<A[j]||j>y)&&i<=mid)
+        {
+            B[k++]=A[i++];
+        }
+        else
+        {
+            B[k++]=A[j++];
+        }
+    }
+    for(int i=x;i<k;i++)A[i]=B[i];
+}

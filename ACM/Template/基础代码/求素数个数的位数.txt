@@ -1,0 +1,12 @@
+
+#include<stdio.h>
+#include<math.h>
+int main()
+{
+    double n;
+    while(scanf("%lf",&n)!=EOF)
+    {
+        printf("%d\n",(int)double(n-log10(n)-log10(log(10)))+1);
+    }
+    return 0;
+}
