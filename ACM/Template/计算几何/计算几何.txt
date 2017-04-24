@@ -1,0 +1,249 @@
+#include<cmath>
+#include<cstdio>
+#include<cstring>
+#include<iostream>
+#include<algorithm>
+using namespace std;
+const double Pi=acos(-1);
+const double eps=1e-8;
+const double R=6875.0/2;
+struct P
+{
+    double x,y;
+    P(double xx,double yy)
+    {
+        x=xx,y=yy;
+    }
+    P()
+    {
+        x=0,y=0;
+    }
+};
+void Read(P &a)
+{
+    scanf("%lf%lf",&a.x,&a.y);
+}
+typedef P V;
+V operator+(P A,P B)
+{
+    return V(A.x+B.x,A.y+B.y);
+}
+V operator-(P A,P B)
+{
+    return V(A.x-B.x,A.y-B.y);
+}
+V operator*(V A,double p)
+{
+    return V(A.x*p,A.y*p);
+}
+V operator*(double p,V A)
+{
+    return V(A.x*p,A.y*p);
+}
+V operator/(V A,double p)
+{
+    return V(A.x/p,A.y/p);
+}
+V operator/(double p,V A)
+{
+    return V(A.x/p,A.y/p);
+}
+double Abs(double x)
+{
+    return x>0?x:-x;
+}
+int dcmp(double x)
+{
+    if(Abs(x)<eps)return 0;
+    return x<0?-1:1;
+}
+double Min(double x,double y)
+{
+    if(dcmp(x-y)>=0)return y;
+    return x;
+}
+double Max(double x,double y)
+{
+    if(dcmp(x-y)>=0)return x;
+    return y;
+}
+double Sqr(double x)
+{
+    return x*x;
+}
+bool operator==(const P &a,const P &b)
+{
+    return dcmp(a.x-b.x)==0&&dcmp(a.y-b.y)==0;
+}
+double Dot(V a,V b)//点积
+{
+    return a.x*b.x+a.y*b.y;
+}
+double Cross(V a,V b)//叉积
+{
+    return a.x*b.y-a.y*b.x;
+}
+double Length(V a)//长度
+{
+    return sqrt(Dot(a,a));
+}
+double Angle(V A,V B)//夹角
+{
+    return acos(Dot(A,B)/Length(A)/Length(B));
+}
+double Area2(P A,P B,P C)//三角形面积两倍
+{
+    return Cross(B-A,C-A);
+}
+V Rotate(V a,double rad)//向量旋转逆时针rad
+{
+    return V(a.x*cos(rad)-a.y*sin(rad),a.x*sin(rad)+a.y*cos(rad));
+}
+P LineLine(P p,V v,P q,P w)//计算两直线的交点（计算前应保证有交点,即Cross（v，w）！=0）
+{
+    V u=p-q;
+    double t=Cross(w,u)/Cross(v,w);
+    return p+v*t;
+}
+bool SegmentSegment(P a1,P a2,P b1,P b2)//线段与线段是否相交   规范相交（不会共线，没有端点交）
+{
+    double c1=Cross(a2-a1,b1-a1);
+    double c2=Cross(a2-a1,b2-a1);
+    double c3=Cross(b2-b1,a1-b1);
+    double c4=Cross(b2-b1,a2-b1);
+    return dcmp(c1)*dcmp(c2)<0&&dcmp(c3)*dcmp(c4)<0;
+}
+int LineSegment(P a1,P a2,P b1,P b2)//线段与直线相交判断
+{
+    double x=Cross(a2-a1,b1-a1);
+    double y=Cross(a2-a1,b2-a1);
+    if(dcmp(x*y)<0)return 1;//不包含端点
+    if(dcmp(x*y)==0)return 2;//包含端点
+    return 0;
+}
+bool OnSegment(P a,P b,P p)//判断一点是否在线段上
+{
+    if(p==a||p==b)return 1;
+    return dcmp(Cross(a-p,b-p))==0&&dcmp(Dot(a-p,b-p))<0;
+}
+double PToSegment(P p,P a,P b)//点p到线段ab的距离
+{
+    if(a==b)
+        return Length(p-a);
+    V v1=b-a,v2=p-a,v3=p-b;
+    if(dcmp(Dot(v1,v2))<0)
+        return Length(v2);
+    if(dcmp(Dot(v1,v3))>0)
+        return Length(v3);
+    return Abs(Area2(p,a,b)/Length(v1));
+}
+double SegmentToSegment(P a1,P a2,P b1,P b2)//p线段到线段的距离
+{
+    if(SegmentSegment(a1,a2,b1,b2))return 0;
+    return Min(Min(PToSegment(a1,b1,b2),PToSegment(a2,b1,b2)),Min(PToSegment(b1,a1,a2),PToSegment(b2,a1,a2)));
+}
+//-----------------------------------------------------------------------------
+struct Circle
+{
+    P c;
+    double r;
+    Circle(P cc,double rr)
+    {
+        c=cc,r=rr;
+    }
+    Circle()
+    {
+        c.x=c.y=r=0;
+    }
+};
+double Torad(double deg)//角度转化成弧度
+{
+    return deg/180*Pi;
+}
+void GetCoor(double r,double lat,double lng,double& x,double& y,double& z)//纬度经度转化成空间坐标
+{
+    lat=Torad(lat);
+    lng=Torad(lng);
+    x=r*cos(lat)*cos(lng);
+    y=r*cos(lat)*sin(lng);
+    z=r*sin(lat);
+}
+double Getdistance(double x1,double y1,double z1,double x2,double y2,double z2,double r)//球面最短距离（走大圆）
+{
+    double d=sqrt(Sqr(x1-x2)+Sqr(y1-y2)+Sqr(z1-z2));
+    return asin(d/2/r)*2*r;
+}
+int GetTagents(P p,Circle c,V *v)//过点p到圆C的切线，v[i]是第i条切线的向量，返回切线条数
+{
+    V u=c.c-p;
+    double dist=Length(u);
+    if(dcmp(dist-c.r)<0)
+        return 0;
+    if(dcmp(dist-c.r)==0)
+    {
+        v[0]=Rotate(u,Pi/2);
+        return 1;
+    }
+    double ang=asin(c.r/dist);
+    v[0]=Rotate(u,-ang);
+    v[1]=Rotate(u,ang);
+    return 2;
+}
+Circle OutCircle(P p1,P p2,P p3)//三角形外接圆
+{
+    double bx=p2.x-p1.x;
+    double by=p2.y-p1.y;
+    double cx=p3.x-p1.x;
+    double cy=p3.y-p1.y;
+    double d=2*(bx*cy-cx*by);
+    double ccx=(cy*(bx*bx+by*by)-by*(cx*cx+cy*cy))/d+p1.x;
+    double ccy=(bx*(cx*cx+cy*cy)-cx*(bx*bx+by*by))/d+p1.y;
+    P p=P(ccx,ccy);
+    return Circle(p,Length(p1-p));
+}
+P Chuixin(P a,P b,P c)//三角形的垂心
+{
+    double dx=2*(a.x-b.x),dy=2*(a.y-b.y);
+    double ex=2*(b.x-c.x),ey=2*(b.y-c.y);
+    double dz=a.x*a.x-b.x*b.x+a.y*a.y-b.y*b.y;
+    double ez=b.x*b.x-c.x*c.x+b.y*b.y-c.y*c.y;
+    double k=(dz*ex-ez*dx)/(ex*dy-dx*ey);
+    double h=(dz*ey-ez*dy)/(ey*dx-dy*ex);
+    double anx=a.x+b.x+c.x-h-h;
+    double any=a.y+b.y+c.y-k-k;
+    return P(anx,any);
+}
+bool cmpp(P a,P b)
+{
+    if(dcmp(a.x-b.x)==0)
+        return dcmp(a.y-b.y)<=0;
+    return dcmp(a.x-b.x)<=0;
+}
+void Convex(P *p,int n,P *q,int &m)//计算凸包。输入点集p，输出点集q和个数m
+{
+    sort(p,p+n,cmpp);
+    //n=unique(p,p+n)-p;//去掉重复的点
+    int cnt=0;
+    for(int i=0;i<n;i++)
+    {
+        while(cnt>1&&dcmp(Cross(q[cnt-1]-q[cnt-2],p[i]-q[cnt-2]))<=0)//如果点不能在凸包边上，去掉等号
+            cnt--;
+        q[cnt++]=p[i];
+    }
+    int num=cnt;
+    for(int i=n-2;i>=0;i--)
+    {
+        while(cnt>num&&dcmp(Cross(q[cnt-1]-q[cnt-2],p[i]-q[cnt-2]))<=0)
+            cnt--;
+        q[cnt++]=p[i];
+    }
+    if(n>1)cnt--;
+    m=cnt;
+}
+int main()
+{
+//    freopen("test1.in","r",stdin);
+//    freopen("test1.out","w",stdout);
+
+    return 0;
+}

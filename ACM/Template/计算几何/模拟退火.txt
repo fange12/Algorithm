@@ -1,0 +1,130 @@
+#include<cmath>
+#include<cstdio>
+#include<cstring>
+#include<iostream>
+#include<algorithm>
+using namespace std;
+//往四个方向走一个步长
+P p[105];
+int n;
+double Cal(P q)
+{
+    double ans=0;
+    for(int i=0;i<n;i++)
+        ans+=Length(p[i]-q);
+    return ans;
+}
+int main()
+{
+//    freopen("test1.in","r",stdin);
+//    freopen("test1.out","w",stdout);
+    while(scanf("%d",&n)!=EOF)
+    {
+        for(int i=0;i<n;i++)
+            Read(p[i]);
+        double stp=100,mi=Cal(p[0]);
+        P f=p[0];
+        while(dcmp(stp-0.2)>=0)
+        {
+            bool is=0;
+            while(!is)
+            {
+                is=1;
+                P now=f,a=P(f.x,f.y+stp);
+                double w=Cal(a);
+                if(dcmp(w-mi)<0)
+                    mi=w,now=a,is=0;
+                a=P(f.x,f.y-stp);
+                w=Cal(a);
+                if(dcmp(w-mi)<0)
+                    mi=w,now=a,is=0;
+                a=P(f.x+stp,f.y);
+                w=Cal(a);
+                if(dcmp(w-mi)<0)
+                    mi=w,now=a,is=0;
+                a=P(f.x-stp,f.y);
+                w=Cal(a);
+                if(dcmp(w-mi)<0)
+                    mi=w,now=a,is=0;
+                f=now;
+            }
+            stp/=2;
+        }
+        printf("%d\n",(int)(mi+0.5));
+    }
+    return 0;
+}
+
+
+
+
+
+
+P p[1005],t[20];
+int n;
+double l,r,v[20];
+bool J(P a)
+{
+    return dcmp(a.x)>=0&&dcmp(a.y)>=0&&dcmp(l-a.x)>=0&&dcmp(r-a.y)>=0;
+}
+double Cal(P a)
+{
+    double ans=Length(p[0]-a);
+    for(int i=1;i<n;i++)
+        ans=Min(ans,Length(p[i]-a));
+    return ans;
+}
+int main()
+{
+//    freopen("test1.in","r",stdin);
+//    freopen("test1.out","w",stdout);
+    int T;
+    scanf("%d",&T);
+    while(T--)
+    {
+        scanf("%lf%lf%d",&l,&r,&n);
+        for(int i=0;i<n;i++)
+            Read(p[i]);
+        for(int i=0;i<15;i++)
+        {
+            t[i].x=(rand()%1000+1)/1000.0*l;
+            t[i].y=(rand()%1000+1)/1000.0*r;
+            v[i]=Cal(t[i]);
+        }
+        double stp=Max(l,r)/sqrt(n);
+        while(dcmp(stp-0.01)>=0)
+        {
+            for(int i=0;i<15;i++)
+            {
+                P a,b;
+                for(int j=0;j<50;j++)
+                {
+                    a=t[i];
+                    double angle=rand()%100/100.0*2*Pi;
+                    b=a+P(stp*cos(angle),stp*sin(angle));
+                    if(J(b))
+                    {
+                        double w=Cal(b);
+                        if(dcmp(w-v[i])>0)
+                        {
+                            v[i]=w;
+                            t[i]=b;
+                        }
+                    }
+                }
+            }
+            stp/=2;
+        }
+        double ans=v[0];
+        int k=0;
+        for(int i=1;i<15;i++)
+            if(dcmp(v[i]-ans)>0)
+        {
+            k=i,ans=v[i];
+        }
+        printf("The safest point is (%.1f, %.1f).\n",t[k].x,t[k].y);
+    }
+    return 0;
+}
+
+

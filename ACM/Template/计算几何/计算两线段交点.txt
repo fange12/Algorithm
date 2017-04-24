@@ -1,0 +1,29 @@
+//求AB和CD两线段交点
+#include<cstdio>
+struct s
+{
+    double x,y;
+};
+struct s A,B,C,D,P;
+double abs(double x)
+{
+    return x<0?-x:x;
+}
+double mul(s A,s B,s C)
+{
+    return (B.x-A.x)*(C.y-A.y)-(C.x-A.x)*(B.y-A.y);
+}
+void cross(s A,s B,s C,s D)
+{
+    double s1=abs(mul(A,C,D));
+    double s2=abs(mul(B,C,D));
+    P.x=(s1*B.x+s2*A.x)/(s1+s2);
+    P.y=(s1*B.y+s2*A.y)/(s1+s2);
+    printf("%lf %lf\n",P.x,P.y);
+}
+int main()
+{
+    scanf("%lf%lf%lf%lf%lf%lf%lf%lf",&A.x,&A.y,&B.x,&B.y,&C.x,&C.y,&D.x,&D.y);
+    cross(A,B,C,D);
+    return 0;
+}

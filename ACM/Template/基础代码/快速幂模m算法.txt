@@ -1,0 +1,15 @@
+LL quick_mod(LL a,LL b,LL m)
+{
+    LL ans=1;
+    while(b)
+    {
+        if(b&1)
+        {
+            ans=(ans*a)%m;
+            b--;
+        }
+        b/=2;
+        a=a*a%m;
+    }
+    return ans;
+}

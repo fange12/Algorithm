@@ -1,0 +1,171 @@
+#include<cstdio>
+#include<cstring>
+#include<vector>
+#include<cmath>
+#include<cstdlib>
+#include<iostream>
+using namespace std;
+struct Point
+{
+    double x,y,z;
+    Point(double x=0,double y=0,double z=0):x(x),y(y),z(z){}
+};
+typedef Point Vector;
+Vector operator +(const Vector &A,const Vector &B)
+{
+    return Vector(A.x+B.x,A.y+B.y,A.z+B.z);
+}
+Vector operator -(const Vector &A,const Vector &B)
+{
+    return Vector(A.x-B.x,A.y-B.y,A.z-B.z);
+}
+Vector operator *(const Vector &A,double p)
+{
+    return Vector(A.x*p,A.y*p,A.z*p);
+}
+Vector operator /(const Vector &A,double p)
+{
+    return Vector(A.x/p,A.y/p,A.z/p);
+}
+double Dot(Vector A,Vector B)
+{
+    return A.x*B.x+A.y*B.y+A.z*B.z;
+}
+double Length(Vector A)
+{
+    return sqrt(Dot(A,A));
+}
+double Angle(Vector A,Vector B)
+{
+    return acos(Dot(A,B)/Length(A)/Length(B));
+}
+Vector Cross(Vector A,Vector B)
+{
+    return Vector(A.y*B.z-A.z*B.y,A.z*B.x-A.x*B.z,A.x*B.y-A.y*B.x);
+}
+struct Face
+{
+    int v[3];
+    Vector normal(Point *P) const
+    {
+        return Cross(P[v[1]]-P[v[0]],P[v[2]]-P[v[0]]);
+    }
+    int cansee(Point *P,int i) const
+    {
+        return Dot(P[i]-P[v[0]],normal(P))>0?1:0;
+    }
+};
+bool vis[1000][1000];
+vector<Face>  CH3D(Point *P,int n)
+{
+    memset(vis,0,sizeof(vis));
+    vector<Face> cur;
+    cur.push_back((Face){0,1,2});
+    cur.push_back((Face){2,1,0});
+    for(int i=3;i<n;i++)
+    {
+        vector<Face> next;
+        for(int j=0;j<cur.size();j++)
+        {
+            Face &f=cur[j];
+            int res=f.cansee(P,i);
+            if(!res)
+            next.push_back(f);
+            for(int k=0;k<3;k++)
+            vis[f.v[k]][f.v[(k+1)%3]]=res;
+        }
+        for(int j=0;j<cur.size();j++)
+            for(int k=0;k<3;k++)
+            {
+                int a=cur[j].v[k],b=cur[j].v[(k+1)%3];
+                if(vis[a][b] != vis[b][a] && vis[a][b])
+                next.push_back((Face){a,b,i});
+            }
+        cur=next;
+    }
+    return cur;
+}
+Point A[100],B[100];
+Point a[100],b[100];
+const double eps=1e-6;
+double rand01()
+{
+    return rand()/(double)RAND_MAX;
+}
+double randeps()
+{
+    return (rand01()-0.5)*eps;
+}
+Point addNoise(Point p)
+{
+    return Point(p.x+randeps(),p.y+randeps(),p.z+randeps());
+}
+double V(Point *P,Point p,const Face t)
+{
+    return Dot(P[t.v[2]]-p,Cross(P[t.v[1]]-p,P[t.v[0]]-p))/6;
+}
+Point Get1(Point *p,int n)
+{
+    double x=0,y=0,z=0;
+    for(int i=0;i<n;i++)
+    {
+        x+=p[i].x;
+        y+=p[i].y;
+        z+=p[i].z;
+    }
+    return Point(x/n,y/n,z/n);
+}
+Point Get2(Point *p,int n,vector<Face> face)
+{
+    Point t=Get1(p,n);
+    double x=0,y=0,z=0,vv,sum=0;
+    for(int i=0;i<face.size();i++)
+    {
+        Face k=face[i];
+        vv=V(p,t,k);
+        sum+=vv;
+        x+=vv*(t.x+p[k.v[0]].x+p[k.v[1]].x+p[k.v[2]].x)/4;
+        y+=vv*(t.y+p[k.v[0]].y+p[k.v[1]].y+p[k.v[2]].y)/4;
+        z+=vv*(t.z+p[k.v[0]].z+p[k.v[1]].z+p[k.v[2]].z)/4;
+    }
+    return Point(x/sum,y/sum,z/sum);
+}
+double dis(Point t,Point *p,const Face f)
+{
+    Vector v=f.normal(p);
+    Point p0=p[f.v[0]];
+    return fabs(Dot(t-p0,v))/Length(v);
+}
+double MIN(Point t,Point *p,vector<Face> face)
+{
+    double ans=1e18;
+    for(int i=0;i<face.size();i++)
+        ans=min(ans,dis(t,p,face[i]));
+    return ans;
+}
+int main()
+{
+    int n,m;
+    while(scanf("%d",&n)!=EOF)
+    {
+        for(int i=0;i<n;i++)
+        {
+            scanf("%lf%lf%lf",&a[i].x,&a[i].y,&a[i].z);
+            A[i]=addNoise(a[i]);
+        }
+        scanf("%d",&m);
+        for(int i=0;i<m;i++)
+        {
+            scanf("%lf%lf%lf",&b[i].x,&b[i].y,&b[i].z);
+            B[i]=addNoise(b[i]);
+        }
+        vector<Face>l=CH3D(A,n);
+        vector<Face>r=CH3D(B,m);
+        Point w1=Get2(a,n,l);
+        double ans=MIN(w1,a,l);
+        Point w2=Get2(b,m,r);
+        ans+=MIN(w2,b,r);
+        printf("%lf\n",ans);
+    }
+    return 0;
+}

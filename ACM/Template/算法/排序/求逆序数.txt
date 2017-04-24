@@ -1,0 +1,45 @@
+#include<cstdio>
+typedef long long LL;
+LL ans,a[500010],b[500010];
+void merge_sort(int x,int y,int m)
+{
+        int p=x,q=m+1,i=0;
+        while(p<=m&&q<=y)
+        {
+            if(a[p]>a[q])
+            {
+                b[i++]=a[q++];
+                ans+=m-p+1;
+            }
+            else b[i++]=a[p++];
+        }
+        while(p<=m)
+            b[i++]=a[p++];
+        while(q<=y)
+            b[i++]=a[q++];
+        for(int j=0;j<i;j++)
+            a[j+x]=b[j];
+}
+void mer(int x,int y)
+{
+    if(y>x)
+    {
+        int m=(y+x)/2;
+        mer(x,m);
+        mer(m+1,y);
+        merge_sort(x,y,m);
+    }
+}
+int main()
+{
+    int n;
+    while(scanf("%d",&n)&&n)
+    {
+        for(int i=0;i<n;i++)
+            scanf("%lld",&a[i]);
+        ans=0;
+        mer(0,n-1);
+        printf("%lld\n",ans);
+    }
+    return 0;
+}

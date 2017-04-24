@@ -1,0 +1,157 @@
+解高次方程：
+
+模方程a^x=b(mod n)，n为任意正整数+模板题
+//hdu 2815 Mod Tree
+#include <cstdio>
+#include <cstring>
+#include <cmath>
+#include <map>
+#include <iostream>
+#include <algorithm>
+using namespace std;
+#define LL __int64
+LL gcd(LL a,LL b)
+{
+    return b==0?a:gcd(b,a%b);
+}
+//拓展欧几里得定理，求ax+by=gcd(a,b)的一组解(x,y),d=gcd(a,b)
+void gcd_mod(LL a,LL b,LL &d,LL &x,LL &y)
+{
+    if(!b){d=a;x=1;y=0;}
+    else{gcd_mod(b,a%b,d,y,x);y-=x*(a/b);}
+}
+//求解模方程d*a^(x-c)=b(mod n)。d,a和n互质，无解返回-1
+LL log_mod (LL a,LL b,LL n,LL c,LL d)
+{
+    LL m,v,e=1,i,x,y,dd;
+    m=ceil(sqrt(n+0.5));     //x=i*m+j
+    map<LL,LL>f;
+    f[1]=m;
+    for(i=1;i<m;i++)  //建哈希表，保存a^0,a^1,...,a^m-1
+    {
+        e=(e*a)%n;
+        if(!f[e])f[e]=i;
+    }
+    e=(e*a)%n;//e=a^m
+    for(i=0;i<m;i++)//每次增加m次方，遍历所有1<=f<=n
+    {
+        gcd_mod(d,n,dd,x,y);//d*x+n*y=1-->(d*x)%n=1-->d*(x*b)%n==b
+        x=(x*b%n+n)%n;
+        if(f[x])
+        {
+            LL num=f[x];
+            f.clear();//需要清空，不然会爆内存
+            return c+i*m+(num==m?0:num);
+        }
+        d=(d*e)%n;
+    }
+
+    return -1;
+}
+int main()
+{
+    LL a,b,n;
+    while(scanf("%I64d%I64d%I64d",&a,&n,&b)!=EOF)
+    {
+        if(b>=n)
+        {
+            printf("Orz,I can’t find D!\n");
+            continue;
+        }
+        if(b==0)
+        {
+            printf("0\n");
+            continue;
+        }
+        LL ans=0,c=0,d=1,t;
+        while((t=gcd(a,n))!=1)
+        {
+            if(b%t){ans=-1;break;}
+            c++;
+            n=n/t;
+            b=b/t;
+            d=d*a/t%n;
+            if(d==b){ans=c;break;}//特判下是否成立。
+        }
+        if(ans!=0)
+        {
+            if(ans==-1){printf("Orz,I can’t find D!\n");}
+            else printf("%I64d\n",ans);
+        }
+        else
+        {
+            ans=log_mod(a,b,n,c,d);
+            if(ans==-1)printf("Orz,I can’t find D!\n");
+            else printf("%I64d\n",ans);
+        }
+    }
+    return 0;
+}
+
+
+
+/*
+    求解模方程a^x=b(mod n)，n为素数。
+    模板题。
+    时间复杂度O(sqrt(n)*logn)
+*/
+#include <cstdio>
+#include <cstring>
+#include <cmath>
+#include <map>
+#include <iostream>
+#include <algorithm>
+using namespace std;
+#define LL long long
+//快速幂求a^b
+LL pow_mod(LL a,LL b,LL n)
+{
+    LL s=1;
+    while(b)
+    {
+        if(b&1)
+            s=(s*a)%n;
+        a=(a*a)%n;
+        b=b>>1;
+    }
+    return s;
+}
+//求解模方程a^x=b(mod n)。n为素数，无解返回-1
+//费马小定理a^(n-1)=1(mod n),n为素数。a^0=1,所以循环节小于等于n，即如果存在解，则最小解x<=n
+LL log_mod (LL a,LL b,LL n)
+{
+    LL m,v,e=1,i;
+    m=ceil(sqrt(n+0.5));     //x=i*m+j
+    //v=inv(pow_mod(a,m,n),n);  //a^m*v=1(mod n)
+    v=pow_mod(a,n-m-1,n);
+    map<LL,LL>x;
+    x[1]=m;
+    for(i=1;i<m;i++)  //建哈希表，保存x^0,x^1,...,x^m-1
+    {
+        e=(e*a)%n;
+        if(!x[e])x[e]=i;
+    }
+    for(i=0;i<m;i++)//每次增加m次方，遍历所有1<=x<=n
+    {
+        if(x[b])
+        {
+            LL num=x[b];
+            x.clear();//需要清空，不然会爆内存
+            return i*m+(num==m?0:num);
+        }
+        b=(b*v)%n;   //b=b/(a^m)
+    }
+
+    return -1;
+}
+int main()
+{
+    LL a,b,n;
+    while(scanf("%I64d%I64d%I64d",&n,&a,&b)!=EOF)
+    {
+        LL ans=log_mod(a,b,n);
+        if(ans==-1)printf("no solution\n");
+        else printf("%I64d\n",ans);
+    }
+    return 0;
+}

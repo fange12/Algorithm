@@ -1,0 +1,64 @@
+#include<cstdio>
+#include<cmath>
+#include<algorithm>
+using namespace std;
+#define M 10
+struct point
+{
+    double x,y;
+}p[M];
+int n,res[M],top;
+bool cmp(point pp,point qq)
+{
+    if(pp.y==qq.y)return pp.x<qq.x;
+    return pp.y<qq.y;
+}
+bool mul(point a,point b,point c)
+{
+    if((b.x-a.x)*(c.y-a.y)>=(c.x-a.x)*(b.y-a.y))return 1;
+    return 0;
+}
+void Graham()
+{
+    int cnt;top=1;
+    sort(p,p+n,cmp);
+    if(n==0)return ;res[0]=0;
+    if(n==1)return ;res[1]=1;
+    if(n==2)return ;res[2]=2;
+    for(int i=2;i<n;i++)
+    {
+        while(top&&!mul(p[res[top-1]],p[res[top]],p[i]))top--;
+        res[++top]=i;
+    }
+    cnt=top;
+    res[++top]=n-2;
+    for(int i=n-3;i>=0;i--)
+    {
+        while(top!=cnt&&!mul(p[res[top-1]],p[res[top]],p[i]))top--;
+        res[++top]=i;
+    }
+}
+double L(point a,point b)
+{
+    return sqrt((a.x-b.x)*(a.x-b.x)+(a.y-b.y)*(a.y-b.y));
+}
+int main()
+{
+    while(scanf("%d",&n)!=EOF)
+    {
+        for(int i=0;i<n;i++)
+            scanf("%lf%lf",&p[i].x,&p[i].y);
+        Graham();
+        double ans1=0.0,ans2=0.0;
+        for(int i=1;i<top;i++)
+            ans2+=(p[res[i]].x-p[res[0]].x)*(p[res[i+1]].y-p[res[0]].y)-
+            (p[res[i+1]].x-p[res[0]].x)*(p[res[i]].y-p[res[0]].y);
+        if(ans2==0.0)ans1=L(p[n-1],p[0]);
+        else {
+        for(int i=1;i<=top;i++)
+            ans1+=L(p[res[i]],p[res[i-1]]);
+        }
+        printf("%.2lf\n%.2lf\n",ans1,ans2/2.0);
+    }
+    return 0;
+}

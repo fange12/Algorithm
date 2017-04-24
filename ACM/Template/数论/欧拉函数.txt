@@ -1,0 +1,64 @@
+每个数的素因子求法：
+void make()
+{
+    memset(p,0,sizeof(p));
+    p[1]=1;
+    for(int i=2;i<N;i++)
+    if(!p[i])
+        for(int j=i;j<N;j+=i)
+        {
+            if(!p[j])p[j]=j;
+            p[j]=p[j]/i*(i-1);
+            q[j][num[j]++]=i;
+        }
+    for(int i=1;i<N;i++)
+        p[i]+=p[i-1];//保存的是1-i之间有多少对互素。
+}
+
+
+
+
+void make()
+{
+    memset(p,0,sizeof(p));
+    for(int i=2;i<M;i++)
+        if(!p[i])
+        for(int j=i;j<M;j+=i)
+        {
+            if(!p[j])p[j]=j;
+            p[j]=p[j]/i*(i-1);
+        }
+}
+稍快的算法：
+void make()
+{
+    for(int i=1;i<M;i++)
+        p[i]=i;
+    for(int i=2;i<M;i+=2)
+        p[i]>>=1;
+    for(int i=3;i<M;i+=2)
+        if(p[i]==i)
+    {
+        for(int j=i;j<M;j+=i)
+            p[j]=p[j]/i*(i-1);
+    }
+}
+
+
+LL phi(LL n)
+{
+    LL ans=n,n1=sqrt(n)+1;
+    for(int i=2;i<=n1;i++)
+    {
+        if(n%i==0)
+        {
+            while(n%i==0)
+               {
+                  n/=i;
+               }
+            ans=ans*(i-1)/i;
+        }
+    }
+    if(n>1)ans=ans*(n-1)/n;
+    return ans;
+}
